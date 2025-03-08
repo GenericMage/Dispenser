@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Info</title>
+    <link rel="icon" type="image/png" href="./assets/Link-Dollar-1.png">
+    <link href="./css/bootstrap-5.3.3.min.css" rel="stylesheet">
+    <script src="./js/qrcode.min.js"></script>
+    <script src="./js/logic.js"></script>
+    <script src="./js/app.js"></script>
+    <script src="./js/dispenser.js"></script>
+    <style>
+        /* Styles unchanged, only head updated */
+        body { font-family: Arial, sans-serif; padding: 20px; margin: 0; background-color: #f5f5f5; background-image: linear-gradient(to right, #ccc 1px, transparent 1px), linear-gradient(to bottom, #ccc 1px, transparent 1px); background-size: 100px 100px; position: relative; color: hsl(270, 50%, 20%); transition: background-color 0.3s, color 0.3s; }
+        body.dark-mode { background-color: #333; background-image: linear-gradient(to right, #666 1px, transparent 1px), linear-gradient(to bottom, #666 1px, transparent 1px); color: #e0e0e0; }
+        .top-buttons { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
+        .btn-custom { padding: 10px 20px; background-color: transparent; border: 2px solid hsl(270, 20%, 60%); border-radius: 5px; transition: background-color 0.3s, color 0.3s; color: hsl(270, 50%, 20%); -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; display: block; width: auto; margin: 0 auto; }
+        .dark-mode .btn-custom { color: #e0e0e0; }
+        .btn-custom:hover:not(:disabled), .btn-custom:active:not(:disabled) { background-color: hsl(270, 20%, 95%); }
+        .btn-custom.connected { background-color: rgba(108, 48, 156, 0.2); }
+        .dark-mode .btn-custom.connected { background-color: rgba(108, 48, 156, 0.3); }
+        .btn-network { width: 48px; height: 48px; background-color: transparent; border: 2px solid hsl(270, 20%, 60%); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s, color 0.3s; color: hsl(270, 50%, 20%); -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; font-size: 20px; }
+        .dark-mode .btn-network { color: #e0e0e0; }
+        .btn-network:hover:not(:disabled), .btn-network:active:not(:disabled) { background-color: hsl(270, 20%, 95%); }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; z-index: 2000; overflow: auto; }
+        .modal.show { display: flex; justify-content: center; align-items: center; }
+        .modal-content { background-color: rgba(100, 95, 110, 0.95); border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, color 0.3s; position: relative; width: 90%; max-width: 500px; margin: 0 auto; }
+        .dark-mode .modal-content { background-color: rgba(50, 45, 60, 0.95); color: #e0e0e0; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border: 0; padding: 15px; }
+        .modal-close { background: none; border: none; font-size: 18px; color: hsl(270, 50%, 20%); -webkit-tap-highlight-color: transparent; cursor: pointer; transition: color 0.3s; }
+        .dark-mode .modal-close { color: #e0e0e0; }
+        .modal-body { text-align: center; padding: 20px; transition: color 0.3s; }
+        .dark-mode .modal-body { color: #e0e0e0; }
+        .modal-body > * { margin: 10px auto; display: block; }
+        .section { margin: 5px 0 35px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, color 0.3s; }
+        #section1, #section3 { background-color: transparent; }
+        #section2 { background-color: rgba(108, 48, 156, 0.2); text-align: center; }
+        .dark-mode #section2 { background-color: rgba(108, 48, 156, 0.3); }
+        #section1-image { display: block; margin: 37.5px auto 20px auto; width: 75px; height: auto; }
+        #section2-buttons { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        #section2-buttons a, #section2-buttons button { padding: 10px 20px; background-color: transparent; border: 2px solid hsl(270, 20%, 60%); border-radius: 5px; transition: background-color 0.3s, color 0.3s; flex: 1; max-width: 150px; margin: 0 5px; color: hsl(270, 50%, 20%); text-decoration: none; text-align: center; -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; }
+        .dark-mode #section2-buttons a, .dark-mode #section2-buttons button { color: #e0e0e0; }
+        #section2-buttons a:hover:not(:disabled), #section2-buttons button:hover:not(:disabled) { background-color: hsl(270, 20%, 95%); }
+        #section3-links { display: flex; flex-direction: row; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: nowrap; }
+        #section3-links a { padding: 8px 16px; background-color: transparent; border: 2px solid hsl(270, 20%, 60%); border-radius: 5px; transition: background-color 0.3s, color 0.3s; color: hsl(270, 50%, 20%); text-decoration: none; text-align: center; -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor: pointer; white-space: nowrap; font-size: 14px; }
+        .dark-mode #section3-links a { color: #e0e0e0; }
+        #section3-links a:hover:not(:disabled) { background-color: hsl(270, 20%, 95%); }
+        @media (max-width: 768px) { #section3-links { flex-wrap: wrap; gap: 8px; } #section3-links a { padding: 6px 12px; font-size: 12px; } }
+        #dispenserAmount { background-color: rgba(90, 85, 100, 0.3); border: 2px solid hsl(270, 20%, 60%); color: hsl(270, 50%, 20%); width: 80%; transition: background-color 0.3s, color 0.3s; }
+        .dark-mode #dispenserAmount { background-color: rgba(90, 85, 100, 0.15); color: #e0e0e0; }
+        #qrContainer { display: flex; justify-content: center; align-items: center; width: 100%; }
+        #qrCanvas { width: 100%; max-width: 300px; height: auto; }
+        #modeToggleContainer { display: flex; justify-content: center; margin-top: 10px; }
+        #modeToggle { width: 48px; height: 48px; font-size: 20px; padding: 0; }
+        #refreshPrice { padding: 5px 10px; font-size: 12px; }
+        #qrAddress { background-color: rgba(90, 85, 100, 0.3); border: 2px solid hsl(270, 20%, 60%); color: hsl(270, 50%, 20%); width: 80%; padding: 8px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .dark-mode #qrAddress { background-color: rgba(90, 85, 100, 0.15); color: #e0e0e0; }
+        #refreshQR { padding: 5px 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <!-- Body unchanged -->
+    <div>
+        <div class="top-buttons">
+            <button id="networkSettings" class="btn-network" onclick="handleNetworkSwitch()">🌐</button>
+            <button id="connectWallet" class="btn-custom" onclick="if (this.classList.contains('connected')) { document.getElementById('disconnectModal').classList.add('show'); } else { document.getElementById('walletModal').classList.add('show'); }">
+                Connect Wallet
+            </button>
+        </div>
+        <div class="section" id="section1">
+            <img id="section1-image" src="./assets/Link-Dollar-1.png" alt="Link Info Logo">
+        </div>
+        <div class="section" id="section2">
+            <p id="section2-tagline" class="mb-2 text-base">A highly scalable and accurately price stable synthetic stablecoin making use of LP Rebase</p>
+            <div id="section2-buttons">
+                <a id="tradeButton" href="https://dexscreener.com/polygon/0x8eb0dd7203c2b9294287c1d46c36536e355d23c4" target="_blank" class="btn-custom">Trade</a>
+                <button id="dispenseButton" onclick="handleDispenseClick()" class="btn-custom">Dispense</button>
+                <button id="freebaseButton" onclick="handleFreebaseClick()" class="btn-custom d-none">Freebase</button>
+            </div>
+        </div>
+        <div class="section" id="section3">
+            <p id="section3-credit" class="text-center text-sm mb-3">Peng Protocol 2025</p>
+            <div id="section3-links">
+                <a href="https://t.me/Dexhune" target="_blank">Telegram</a>
+                <a href="https://github.com/orgs/Peng-Protocol/repositories" target="_blank">GitHub</a>
+                <a href="https://x.com/Dexhune" target="_blank">X (Twitter)</a>
+            </div>
+            <div id="modeToggleContainer">
+                <button id="modeToggle" class="btn-custom" onclick="toggleDarkMode()">🌙</button>
+            </div>
+        </div>
+        <!-- Wallet Modal -->
+        <div class="modal" id="walletModal" tabindex="-1" aria-labelledby="walletModalLabel" aria-hidden="true" onclick="if (event.target === this) document.getElementById('walletModal').classList.remove('show');">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="walletModalLabel">Connect Wallet</h5>
+                    <button type="button" class="modal-close" onclick="document.getElementById('walletModal').classList.remove('show');" aria-label="Close">✖</button>
+                </div>
+                <div class="modal-body">
+                    <button id="browserWallet" onclick="connectToWallet()" class="btn-custom">Browser Wallet</button>
+                    <button id="qrCodeButton" onclick="document.getElementById('walletModal').classList.remove('show'); document.getElementById('qrModal').classList.add('show'); generateQRCode();" class="btn-custom">QR Code</button>
+                </div>
+            </div>
+        </div>
+        <!-- QR Code Modal -->
+        <div class="modal" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true" onclick="if (event.target === this) { document.getElementById('qrModal').classList.remove('show'); document.getElementById('walletModal').classList.add('show'); }">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="qrModalLabel">Scan QR Code</h5>
+                    <button type="button" class="modal-close" onclick="document.getElementById('qrModal').classList.remove('show'); document.getElementById('walletModal').classList.add('show');" aria-label="Close">✖</button>
+                </div>
+                <div class="modal-body">
+                    <input id="qrAddress" type="text" placeholder="Enter Ethereum Address (optional)">
+                    <button id="refreshQR" class="btn-custom" onclick="generateQRCode()">🔄</button>
+                    <div id="qrContainer">
+                        <canvas id="qrCanvas"></canvas>
+                    </div>
+                    <span id="qrError" style="color: red; display: none;"></span>
+                    <button id="copyUri" class="btn-custom" style="display: none;" onclick="copyURI()">Copy URI</button>
+                </div>
+            </div>
+        </div>
+        <!-- Dispenser Modal -->
+        <div class="modal" id="dispenserModal" tabindex="-1" aria-labelledby="dispenserModalLabel" aria-hidden="true" onclick="if (event.target === this) document.getElementById('dispenserModal').classList.remove('show');">
+            <div class="modal-content relative">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dispenserModalLabel">Dispense LUSD</h5>
+                    <button type="button" class="modal-close" onclick="document.getElementById('dispenserModal').classList.remove('show');" aria-label="Close">✖</button>
+                </div>
+                <div class="modal-body">
+                    <span id="dispenserCost" class="absolute top-2 right-7 text-sm">0 WPOL</span>
+                    <input id="dispenserAmount" type="text" placeholder="LUSD Amount" class="form-control rounded-md border-2 border-border-color">
+                    <span id="dispenserError" style="color: red; display: none;"></span>
+                    <button id="dispenserExecute" class="btn-custom">Execute</button>
+                    <button id="refreshPrice" onclick="fetchAndUpdatePrice()" class="btn-custom">🔄</button>
+                </div>
+            </div>
+        </div>
+        <!-- Disconnect Modal -->
+        <div class="modal" id="disconnectModal" tabindex="-1" aria-labelledby="disconnectModalLabel" aria-hidden="true" onclick="if (event.target === this) document.getElementById('disconnectModal').classList.remove('show');">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="disconnectModalLabel">Disconnect Wallet</h5>
+                    <button type="button" class="modal-close" onclick="document.getElementById('disconnectModal').classList.remove('show');" aria-label="Close">✖</button>
+                </div>
+                <div class="modal-body">
+                    <p class="my-2">You are about to disconnect</p>
+                    <button onclick="disconnectWallet()" class="btn-custom">Yes</button>
+                    <button onclick="document.getElementById('disconnectModal').classList.remove('show');" class="btn-custom">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Scripts -->
+    <script src="./js/bootstrap-5.3.3.bundle.min.js"></script>
+    <script src="./js/alpinejs-3.12.0.min.js" defer></script>
+</body>
+</html>
+<!-- Version: v0.1.10 -->
